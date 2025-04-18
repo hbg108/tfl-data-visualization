@@ -1,0 +1,47 @@
+
+version: 2
+
+sources:
+  - name: tfl
+    database: de-zc-hbg # replace with your project id
+    schema: tfl_dataset
+    tables:
+      - name: station_footfall
+
+models:
+    - name: station_footfall_daily
+      description: "Aggregate by day"
+      columns:
+          - name: travel_date
+          - name: day_of_week
+          - name: station
+          - name: entry_tap_count
+          - name: exit_tap_count
+          - name: total_tap_count
+
+    - name: station_footfall_weekly
+      description: "Aggregate by week"
+      columns:
+          - name: travel_week
+          - name: station
+          - name: entry_tap_count
+          - name: exit_tap_count
+          - name: total_tap_count
+
+    - name: station_footfall_monthly
+      description: "Aggregate by month"
+      columns:
+          - name: travel_month
+          - name: station
+          - name: entry_tap_count
+          - name: exit_tap_count
+          - name: total_tap_count
+        
+    - name: station_footfall_yearly
+      description: "Aggregate by year"
+      columns:
+          - name: travel_year
+          - name: station
+          - name: entry_tap_count
+          - name: exit_tap_count
+          - name: total_tap_count

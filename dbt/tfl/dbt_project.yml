@@ -1,0 +1,19 @@
+name: 'tfl'
+version: '1.0.0'
+
+profile: 'tfl'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  tfl:
+    +materialized: table

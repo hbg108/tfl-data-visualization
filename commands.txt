@@ -1,0 +1,17 @@
+cd terraform
+terraform init
+terraform plan
+terraform apply
+
+cd ../kestra
+docker compose up -d
+
+curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/01_gcp_kv.yaml
+Execute and add your GCP_CREDS in the KV Store of the Kestra UI
+
+curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/02_gcp_taxi.yaml
+curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/02_gcp_taxi_scheduled.yaml
+curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/03_gcp_dbt.yaml
+
+create dataset tfldbt manually before running dbt build to avoid wrong region
+
