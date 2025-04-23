@@ -1,0 +1,17 @@
+id: 03_station_footfall_2019_2025
+namespace: tfl
+
+tasks:
+  - id: station_footfall_2019_2025
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["2019", "2020", "2021", "2022", "2023_2024", "2024_2025"]
+    concurrencyLimit: 1
+    tasks:
+      - id: station_footfall
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: tfl
+        flowId: 02_station_footfall
+        inputs:
+          year: "{{ taskrun.value }}"
+        wait: true
+        transmitFailed: true

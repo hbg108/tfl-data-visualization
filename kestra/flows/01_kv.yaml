@@ -6,7 +6,7 @@ tasks:
     type: io.kestra.plugin.core.kv.Set
     key: GCP_PROJECT_ID
     kvType: STRING
-    value: de-zc-hbg # replace with your project id
+    value: tfl-data-visualization # replace with your project id
 
   - id: gcp_location
     type: io.kestra.plugin.core.kv.Set
@@ -18,10 +18,10 @@ tasks:
     type: io.kestra.plugin.core.kv.Set
     key: GCP_BUCKET_NAME
     kvType: STRING
-    value: de-zc-hbg-tfl-bucket # replace with your bucket name and make sure it's globally unique
+    value: tfl-data-visualization-bucket # replace with your bucket name and make sure it's globally unique
 
   - id: gcp_dataset
     type: io.kestra.plugin.core.kv.Set
     key: GCP_DATASET
     kvType: STRING
-    value: tfl_dataset
+    value: tfl

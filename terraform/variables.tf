@@ -1,12 +1,12 @@
 variable "credentials" {
   description = "Service Account Credentials"
-  default     = "../.keys/tfl.json"
+  default     = "/home/hbg/.keys/tfl.json"
 }
 
 
 variable "project" {
   description = "Project"
-  default     = "de-zc-hbg" # replace with your project id
+  default     = "tfl-data-visualization" # replace with your project id
 }
 
 variable "region" {
@@ -15,18 +15,18 @@ variable "region" {
 }
 
 variable "location" {
-  description = "Project Location"
-  default     = "ASIA-NORTHEAST2" # replace with your region
+  description = "Bucket Location"
+  default     = "ASIA-NORTHEAST2" # replace with your location
 }
 
 variable "bq_dataset_name" {
   description = "BigQuery Dataset Name"
-  default     = "tfl_dataset"
+  default     = "tfl"
 }
 
 variable "gcs_bucket_name" {
   description = "Storage Bucket Name"
-  default     = "de-zc-hbg-tfl-bucket" # replace with your bucket name and make sure it's globally unique
+  default     = "tfl-data-visualization-bucket" # replace with your bucket name and make sure it's globally unique
 }
 
 variable "gcs_storage_class" {

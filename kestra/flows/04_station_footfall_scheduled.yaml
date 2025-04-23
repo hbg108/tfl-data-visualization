@@ -1,0 +1,144 @@
+id: 04_station_footfall_scheduled
+namespace: tfl
+
+inputs:
+  - id: year
+    type: STRING
+    defaults: "2024_2025"
+
+variables:
+  file: "StationFootfall_{{inputs.year}}.csv"
+  file_name: "StationFootfall_{{inputs.year}}"
+  gcs_file: "gs://{{kv('GCP_BUCKET_NAME')}}/{{vars.file}}"
+  table: "{{kv('GCP_DATASET')}}.station_footfall_{{inputs.year}}"
+  data_before_2023: "{{outputs.extract_before_2023.outputFiles['StationFootfall_' ~ inputs.year ~ '.csv']}}"
+  data_from_2023: "{{outputs.extract_from_2023.outputFiles['StationFootfall_' ~ inputs.year ~ '.csv']}}"
+
+tasks:
+  - id: set_label
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      file: "{{render(vars.file)}}"
+
+  - id: if_before_2023
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{inputs.year | split('_') | first | number('INT') < 2023}}"
+    then:
+      - id: extract_before_2023
+        type: io.kestra.plugin.scripts.shell.Commands
+        outputFiles:
+          - "*.csv"
+        taskRunner:
+          type: io.kestra.plugin.core.runner.Process
+        commands:
+          - wget -q https://crowding.data.tfl.gov.uk/Network%20Demand/{{render(vars.file)}}
+      - id: upload_to_gcs_before_2023
+        type: io.kestra.plugin.gcp.gcs.Upload
+        from: "{{render(vars.data_before_2023)}}"
+        to: "{{render(vars.gcs_file)}}"
+
+  - id: if_from_2023
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{inputs.year | split('_') | first | number('INT') >= 2023}}"
+    then:
+      - id: extract_from_2023
+        type: io.kestra.plugin.scripts.shell.Commands
+        outputFiles:
+          - "*.csv"
+        taskRunner:
+          type: io.kestra.plugin.core.runner.Process
+        commands:
+          - wget -q https://crowding.data.tfl.gov.uk/Network%20Demand/{{render(vars.file_name)}}%20.csv -O {{render(vars.file)}}
+      - id: upload_to_gcs_from_2023
+        type: io.kestra.plugin.gcp.gcs.Upload
+        from: "{{render(vars.data_from_2023)}}"
+        to: "{{render(vars.gcs_file)}}"
+
+  - id: bq_station_footfall
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      CREATE TABLE IF NOT EXISTS `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.station_footfall`
+      (
+          unique_row_id BYTES OPTIONS (description = ''),
+          filename STRING OPTIONS (description = 'The source filename from which the data was loaded.'),      
+          travel_date DATE OPTIONS (description = ''),
+          day_of_week STRING OPTIONS (description = ''),
+          station STRING OPTIONS (description = ''),
+          entry_tap_count INTEGER OPTIONS (description = ''),
+          exit_tap_count INTEGER OPTIONS (description = '')
+      )
+      PARTITION BY travel_date;
+
+  - id: bq_station_footfall_ext
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      CREATE OR REPLACE EXTERNAL TABLE `{{kv('GCP_PROJECT_ID')}}.{{render(vars.table)}}_ext`
+      (
+          travel_date STRING OPTIONS (description = ''),
+          day_of_week STRING OPTIONS (description = ''),
+          station STRING OPTIONS (description = ''),
+          entry_tap_count INTEGER OPTIONS (description = ''),
+          exit_tap_count INTEGER OPTIONS (description = '')
+      )
+      OPTIONS (
+          format = 'CSV',
+          uris = ['{{render(vars.gcs_file)}}'],
+          skip_leading_rows = 1,
+          ignore_unknown_values = TRUE
+      );
+
+  - id: bq_station_footfall_tmp
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      CREATE OR REPLACE TABLE `{{kv('GCP_PROJECT_ID')}}.{{render(vars.table)}}`
+      AS
+      SELECT
+        MD5(CONCAT(
+          COALESCE(CAST(travel_date AS STRING), ""),
+          COALESCE(CAST(day_of_week AS STRING), ""),
+          COALESCE(CAST(station AS STRING), "")
+        )) AS unique_row_id,
+        "{{render(vars.file)}}" AS filename,
+        PARSE_DATE('%Y%m%d', travel_date) AS travel_date,
+        day_of_week,
+        station,
+        entry_tap_count,
+        exit_tap_count
+      FROM `{{kv('GCP_PROJECT_ID')}}.{{render(vars.table)}}_ext`;
+
+  - id: bq_station_footfall_merge
+    type: io.kestra.plugin.gcp.bigquery.Query
+    sql: |
+      MERGE INTO `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.station_footfall` T
+      USING `{{kv('GCP_PROJECT_ID')}}.{{render(vars.table)}}` S
+      ON T.unique_row_id = S.unique_row_id
+      WHEN NOT MATCHED THEN
+        INSERT (unique_row_id, filename, travel_date, day_of_week, station, entry_tap_count, exit_tap_count)
+        VALUES (S.unique_row_id, S.filename, S.travel_date, S.day_of_week, S.station, S.entry_tap_count, S.exit_tap_count)
+      WHEN MATCHED THEN
+        UPDATE SET
+          T.filename = S.filename,
+          T.entry_tap_count = S.entry_tap_count,
+          T.exit_tap_count = S.exit_tap_count;
+
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: If you'd like to explore Kestra outputs, disable it.
+    disabled: false
+
+pluginDefaults:
+  - type: io.kestra.plugin.gcp
+    values:
+      serviceAccount: "{{kv('GCP_CREDS')}}"
+      projectId: "{{kv('GCP_PROJECT_ID')}}"
+      location: "{{kv('GCP_LOCATION')}}"
+      bucket: "{{kv('GCP_BUCKET_NAME')}}"
+
+triggers:
+  - id: weekly
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "30 6 * * 3"
+    stopAfter:
+      - FAILED
+    timezone: Etc/UTC
+    disabled: false
