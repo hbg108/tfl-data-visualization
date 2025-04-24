@@ -15,13 +15,41 @@
 
 ## How to run
 
-### Clone this repository
+### Create a project on GCP
 
-```
-git clone https://github.com/hbg108/tfl-data-visualization.git
-```
+Create a project on GCP and rememeber the project id for future uses.
+
+For example: tfl-data-visualization
+
+### Generate SSH keys and upload public key to GCP
+
+Compute Engine - Metadata - SSH Keys
+
+### Create a VM instance in Compute Engine
+
+e2-standard-4 (4 vCPU, 2 core, 16 GB memory)
+
+OS: Ubuntu 24.04 LTS
+
+Boot disk: Balanced persistent disk 30GB
+
+### Create a Python virtual environment
+
+sudo apt-get install python3-venv
+python3 -m venv venv
+source venv/bin/activate
+
+### Install Docker
+
+https://docs.docker.com/engine/install/ubuntu/
+
+### Install Terraform
+
+https://developer.hashicorp.com/terraform/install
 
 ### Service account
+
+IAM & Admin - Service accounts
 
 Create a service account named "tfl-service-account" in your GCP and assign it the following roles:
 
@@ -29,7 +57,13 @@ Create a service account named "tfl-service-account" in your GCP and assign it t
 - Compute Admin
 - Storage Admin
 
-Create a json credential key for the created service account, when created, save the key and rename it to "tfl.json". Create a folder named ".keys" under the repository folder, and move the key into it.
+Create a json credential key for the created service account, when created, save the key and rename it to "tfl.json". Create a folder named ".keys" under your home directory, and move the key into it.
+
+### Clone this repository
+
+```
+git clone https://github.com/hbg108/tfl-data-visualization.git
+```
 
 ### Infrastructure as Code - Terraform
 
@@ -39,6 +73,7 @@ Go to the terraform folder, modify the values in the variables.tf accordingly an
 terraform init
 terraform plan
 terraform apply
+yes
 ```
 
 ### Workflow Orchestration - Kestra
@@ -46,7 +81,7 @@ terraform apply
 Go to the kestra folder, and execute the following command to run Kestra in docker.
 
 ```bash
-docker compose up
+docker compose up -d
 ```
 
 Execute the following commands to add flows into Kestra.
@@ -64,18 +99,24 @@ Manually add a new key-value in the tfl namespace whose key is "GCP_CREDS", type
 
 Now you should be able to execute the flow 02_station_footfall to put data into cloud storage bucket and BigQuery dataset. It is suggested that the flow be executed by 6 times, with the input selection of the year from 2019 to 2024_2025. Due to the naming rule of the data file changed from 2023, the flow processes the data file before 2023 and from 2023 differently.
 
+Paritioning
+
 ### Transformation - dbt
 
 If you have not installed dbt yet, you can follow the following steps:
 
 https://docs.getdbt.com/docs/core/installation-overview
 
+Activate Python virtual environment and install dbt.
+
+source venv/bin/activate
+
 ```bash
 python -m pip install dbt-core dbt-bigquery
 ```
 cd ~
 mkdir .dbt
-touch profiles.yml
+copy profiles.yml to ~/.dbt and replace accordingly
 
 In the dbt folder, execute the following commands:
 
