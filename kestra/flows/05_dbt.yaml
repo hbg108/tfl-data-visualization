@@ -15,7 +15,7 @@ tasks:
     url: https://github.com/hbg108/tfl-data-visualization
     branch: main
     namespace: "{{flow.namespace}}"
-    gitDirectory: dbt/tfl
+    gitDirectory: dbt
     dryRun: false
     disabled: false # this Git Sync is needed only when running it the first time, afterwards the task can be disabled
 
@@ -51,3 +51,13 @@ tasks:
             timeout_seconds: 300
             fixed_retries: 1
         target: dev
+
+triggers:
+  - id: execute_dbt_build_after_loading_data_into_gcp
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flow_trigger
+      flows:
+        - namespace: tfl
+          flowId: 04_station_footfall_scheduled
+          states: [SUCCESS]

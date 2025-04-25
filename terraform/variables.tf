@@ -1,12 +1,12 @@
 variable "credentials" {
   description = "Service Account Credentials"
-  default     = "/home/hbg/.keys/tfl.json"
+  default     = "/home/hbg/.keys/tfl.json" # replace with your path
 }
 
 
 variable "project" {
   description = "Project"
-  default     = "tfl-data-visualization" # replace with your project id
+  default     = "tfl-data-visualization" # replace with your project id (globally unique)
 }
 
 variable "region" {
@@ -26,7 +26,7 @@ variable "bq_dataset_name" {
 
 variable "gcs_bucket_name" {
   description = "Storage Bucket Name"
-  default     = "tfl-data-visualization-bucket" # replace with your bucket name and make sure it's globally unique
+  default     = "tfl-data-visualization-bucket" # replace with your bucket name (globally unique)
 }
 
 variable "gcs_storage_class" {

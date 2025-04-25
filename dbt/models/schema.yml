@@ -3,8 +3,8 @@ version: 2
 
 sources:
   - name: tfl
-    database: tfl-data-visualization # replace with your project id
-    schema: tfl
+    database: "{{ env_var('DBT_DATABASE', 'tfl-data-visualization') }}"
+    schema: "{{ env_var('DBT_SCHEMA', 'tfl') }}"
     tables:
       - name: station_footfall
 
