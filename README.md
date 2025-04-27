@@ -2,145 +2,175 @@
 
 ## Overview
 
+This project implements an end-to-end data engineering pipeline to analyze station footfall data from Transport for London (TfL).  
+The goal is to provide insights into passenger flow patterns (tap counts) at Tube and TfL Rail stations across multiple dimensions.
 
+The project was completed as part of the [DataTalksClub Data Engineering Zoomcamp 2025](https://github.com/DataTalksClub/data-engineering-zoomcamp).
 
 ## Technologies
 
-- Cloud: Google Cloud Platform
+- Cloud: Google Cloud Platform (GCP)
+
 - Infrastructure as Code: Terraform
+
 - Workflow Orchestration: Kestra
-- Data Warehouse: Google BigQuery
+
+- Data Warehouse: BigQuery
+
 - Transformation: dbt
-- Visualization: Google Looker Studio
 
-## How to run
+- Visualization: Looker Studio
 
-### Create a project on GCP
+## How to Run
 
-Create a project on GCP and rememeber the project id for future uses.
-
-For example: tfl-data-visualization
-
-### Generate SSH keys and upload public key to GCP
-
-Compute Engine - Metadata - SSH Keys
-
-### Create a VM instance in Compute Engine
-
-e2-standard-4 (4 vCPU, 2 core, 16 GB memory)
-
-OS: Ubuntu 24.04 LTS
-
-Boot disk: Balanced persistent disk 30GB
-
-### Create a Python virtual environment
-
-sudo apt-get install python3-venv
-python3 -m venv venv
-source venv/bin/activate
-
-### Install Docker
-
-https://docs.docker.com/engine/install/ubuntu/
-
-### Install Terraform
-
-https://developer.hashicorp.com/terraform/install
-
-### Service account
-
-IAM & Admin - Service accounts
-
-Create a service account named "tfl-service-account" in your GCP and assign it the following roles:
-
-- BigQuery Admin
-- Compute Admin
-- Storage Admin
-
-Create a json credential key for the created service account, when created, save the key and rename it to "tfl.json". Create a folder named ".keys" under your home directory, and move the key into it.
-
-### Clone this repository
-
-```
-git clone https://github.com/hbg108/tfl-data-visualization.git
-```
-
-### Infrastructure as Code - Terraform
-
-Go to the terraform folder, modify the values in the variables.tf accordingly and execute the following commands to create a bucket in the Google Cloud Storage and a dataset in the BigQuery for subsequent use.
+### Clone the Repository
 
 ```bash
+git clone https://github.com/hbg108/tfl-data-visualization.git
+cd tfl-data-visualization
+```
+
+### Set up the Service Account
+
+Create a GCP service account with the following roles:
+
+- `BigQuery Admin`
+
+- `Compute Admin`
+
+- `Storage Admin`
+
+Generate a JSON credential key for the service account. After creation, save the key. Create a folder named `.keys` under the cloned repository, upload the key into it, and rename it to `tfl.json`.
+
+```bash
+mkdir .keys
+mv downloaded-credential-key.json .keys/tfl.json
+```
+
+### Infrastructure as Code (Terraform)
+
+Navigate to the `terraform` directory:
+
+```bash
+cd terraform
+vi variables.tf # update values accordingly
 terraform init
 terraform plan
 terraform apply
-yes
 ```
 
-### Workflow Orchestration - Kestra
+This will create:
 
-Go to the kestra folder, and execute the following command to run Kestra in docker.
+- A Cloud Storage bucket for raw data
+
+- A BigQuery dataset for structured data
+
+### Workflow Orchestration (Kestra)
+
+Start Kestra using Docker Compose:
 
 ```bash
+cd ../kestra
 docker compose up -d
 ```
 
-Execute the following commands to add flows into Kestra.
+Import flows into Kestra:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/01_kv.yaml
 curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/02_station_footfall.yaml
+curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/03_station_footfall_2019_2025.yaml
+curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/04_station_footfall_scheduled.yaml
+curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/05_dbt.yaml
 ```
 
-Open the Kestra UI by visiting http://localhost:8080/ in your browser. Edit the values in the flow 01_kv accordingly and execute it to set needed key-value pairs in Kestra.
+Set port forwarding for port 8080 and open the Kestra UI by visiting http://localhost:8080/ in your browser.  
+Edit the values in the flow `01_kv` accordingly and execute it to set the required key-value pairs in Kestra:
 
-Go to the KV Store and see if the following key-value pairs are correctly setted: GCP_LOCATION, GCP_PROJECT_ID, GCP_DATASET, GCP_BUCKET_NAME. 
+- `GCP_DATASET`
 
-Manually add a new key-value in the tfl namespace whose key is "GCP_CREDS", type is JSON, and value is the content of the tfl.json file that downloaded when create the service account.
+- `GCP_BUCKET_NAME`
 
-Now you should be able to execute the flow 02_station_footfall to put data into cloud storage bucket and BigQuery dataset. It is suggested that the flow be executed by 6 times, with the input selection of the year from 2019 to 2024_2025. Due to the naming rule of the data file changed from 2023, the flow processes the data file before 2023 and from 2023 differently.
+- `GCP_LOCATION`
 
-Paritioning
+- `GCP_PROJECT_ID`
 
-### Transformation - dbt
+Manually add a new key-value under the `tfl` namespace, with:
 
-If you have not installed dbt yet, you can follow the following steps:
+- Key: `GCP_CREDS`
 
-https://docs.getdbt.com/docs/core/installation-overview
+- Type: JSON
 
-Activate Python virtual environment and install dbt.
+- Value: the contents of the `tfl.json` file downloaded when creating the service account.
 
-source venv/bin/activate
+### Data Ingestion
 
-```bash
-python -m pip install dbt-core dbt-bigquery
-```
-cd ~
-mkdir .dbt
-copy profiles.yml to ~/.dbt and replace accordingly
+The ingestion process is automated using Kestra and follows these steps:
 
-In the dbt folder, execute the following commands:
+- Download the station footfall data from the TfL open data website (CSV format).
 
-```bash
-dbt init tfl
+- Upload the data to the created Google Cloud Storage bucket.
 
-The profile tfl already exists in /home/hbg/.dbt/profiles.yml. Continue and overwrite it? [y/N]: N
-cd tfl
-dbt debug
-to check connection to BigQuery
-If All checks passed! the connection is OK
-```
+- Create an external table for each year’s original data file (e.g., `station_footfall_2019_ext`).
 
-dbt build --select station_footfall_daily
+- Create a table adding fields such as unique row ID and original file name, and perform data type conversions (e.g., `station_footfall_2019`).
 
-in dbt/tfl, dbt build
+- Create a consolidated table (`station_footfall`) merging data across all years, based on unique row IDs to avoid duplication. This table is partitioned by travel date to optimize date-based queries.
 
+The flows are organized as follows:
 
+- `02_station_footfall`: Defines the above ingestion process, allowing selection of specific years (2019–2024_2025).  
+Due to changes in file naming conventions starting in 2023, the flow handles pre-2023 and post-2023 data differently.
 
+- `03_station_footfall_2019_2025`: Uses `02_station_footfall` as a subflow to ingest all data from 2019 to 2024_2025.  
+**It is recommended to use this flow to ingest all data in a single execution.**
 
+- `04_station_footfall_scheduled`: Automates weekly ingestion of newly updated data from the TfL website.  
+It is scheduled to run every Wednesday at 6:30 AM, slightly after the expected data update.
 
+### Transformation (dbt)
 
+The dbt project files are located in the `dbt` directory.  
+dbt runs inside Docker via Kestra, so no manual installation of dbt is required.
 
+The `05_dbt` flow:
 
+- Syncs dbt project files from the Git repository.
 
+- Creates a table `station_footfall_daily` by aggregating data from station_footfall, optimized for visualization purposes.
 
-## Dashboard
+- Is automatically triggered upon successful completion of `04_station_footfall_scheduled`.
+
+## Dashboard (Looker Studio)
+
+The dashboard includes two tiles and allows users to filter by:
+
+- Date Range
+
+- Station
+
+- Day of Week
+
+- Tap Type (Entry / Exit / Total)
+
+- Granularity (Day / Week / Month / Year)
+
+### Tiles
+
+- **Time Series Chart**
+
+  Displays tap counts over time for the top 10 stations.
+
+- **Station Ranking Table**
+
+  Lists all stations ranked by tap counts.
+
+![Dashboard](images/dashboard.png)
+
+## Notes
+
+- **Data Source**: https://crowding.data.tfl.gov.uk/
+
+- **Official dashboards** are available at the [TfL Network Demand Data site](https://tfl.gov.uk/corporate/publications-and-reports/network-demand-data).
+
+- This project independently builds a full data pipeline and custom dashboard for learning and exploration purposes.

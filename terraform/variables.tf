@@ -1,6 +1,6 @@
 variable "credentials" {
   description = "Service Account Credentials"
-  default     = "/home/hbg/.keys/tfl.json" # replace with your path
+  default     = "../.keys/tfl.json" # replace with your path
 }
 
 
