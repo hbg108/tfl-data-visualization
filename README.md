@@ -44,7 +44,8 @@ Generate a JSON credential key for the service account. After creation, save the
 
 ```bash
 mkdir .keys
-mv downloaded-credential-key.json .keys/tfl.json
+cd .keys
+mv downloaded-credential-key.json tfl.json
 ```
 
 ### Infrastructure as Code (Terraform)
@@ -52,7 +53,7 @@ mv downloaded-credential-key.json .keys/tfl.json
 Navigate to the `terraform` directory:
 
 ```bash
-cd terraform
+cd ../terraform
 vi variables.tf # update values accordingly
 terraform init
 terraform plan
@@ -87,13 +88,13 @@ curl -X POST http://localhost:8080/api/v1/flows/import -F fileUpload=@flows/05_d
 Set port forwarding for port 8080 and open the Kestra UI by visiting http://localhost:8080/ in your browser.  
 Edit the values in the flow `01_kv` accordingly and execute it to set the required key-value pairs in Kestra:
 
-- `GCP_DATASET`
-
-- `GCP_BUCKET_NAME`
+- `GCP_PROJECT_ID`
 
 - `GCP_LOCATION`
 
-- `GCP_PROJECT_ID`
+- `GCP_BUCKET_NAME`
+
+- `GCP_DATASET`
 
 Manually add a new key-value under the `tfl` namespace, with:
 
@@ -142,6 +143,8 @@ The `05_dbt` flow:
 - Is automatically triggered upon successful completion of `04_station_footfall_scheduled`.
 
 ## Dashboard (Looker Studio)
+
+You can access the dashboard [here](https://lookerstudio.google.com/reporting/33cf406c-c312-4a59-bebd-5d8bf62e0ca6).
 
 The dashboard includes two tiles and allows users to filter by:
 
