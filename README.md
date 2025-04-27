@@ -3,7 +3,7 @@
 ## Overview
 
 This project implements an end-to-end data engineering pipeline to analyze station footfall data from Transport for London (TfL).  
-The goal is to provide insights into passenger flow patterns (tap counts) at Tube and TfL Rail stations across multiple dimensions.
+The goal is to provide insights into passenger flow patterns (tap counts of Oyster cards) at Tube and TfL Rail stations across multiple dimensions.
 
 The project was completed as part of the [DataTalksClub Data Engineering Zoomcamp 2025](https://github.com/DataTalksClub/data-engineering-zoomcamp).
 
@@ -40,7 +40,7 @@ Create a GCP service account with the following roles:
 
 - `Storage Admin`
 
-Generate a JSON credential key for the service account. After creation, save the key. Create a folder named `.keys` under the cloned repository, upload the key into it, and rename it to `tfl.json`.
+Create a JSON credential key for the service account. After creation, save the key. Create a folder named `.keys` under the cloned repository, upload the key into it, and rename it to `tfl.json`.
 
 ```bash
 mkdir .keys
@@ -172,8 +172,8 @@ The dashboard includes two tiles and allows users to filter by:
 
 ## Notes
 
-- **Data Source**: https://crowding.data.tfl.gov.uk/
+- Data source: https://crowding.data.tfl.gov.uk/
 
-- **Official dashboards** are available at the [TfL Network Demand Data site](https://tfl.gov.uk/corporate/publications-and-reports/network-demand-data).
+- Official dashboards are available at the [TfL Network Demand Data site](https://tfl.gov.uk/corporate/publications-and-reports/network-demand-data).
 
 - This project independently builds a full data pipeline and custom dashboard for learning and exploration purposes.
