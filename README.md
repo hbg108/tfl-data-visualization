@@ -3,7 +3,8 @@
 ## Overview
 
 This project implements an end-to-end data engineering pipeline to analyze station footfall data from Transport for London (TfL).  
-The goal is to provide insights into passenger flow patterns (tap counts of Oyster cards) at Tube and TfL Rail stations across multiple dimensions.
+The goal is to provide insights into passenger flow patterns (using tap counts of Oyster cards) at Tube and TfL Rail stations across multiple dimensions.  
+Understanding these patterns is crucial for optimizing station management, improving passenger experience, identifying congestion trends, and supporting data-driven decisions for infrastructure planning and service scheduling.
 
 The project was completed as part of the [DataTalksClub Data Engineering Zoomcamp 2025](https://github.com/DataTalksClub/data-engineering-zoomcamp).
 
