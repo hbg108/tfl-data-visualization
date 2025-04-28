@@ -103,9 +103,9 @@ Manually add a new key-value under the `tfl` namespace, with:
 
 - Type: JSON
 
-- Value: the contents of the `tfl.json` file downloaded when creating the credential key for the service account.
+- Value: the contents of the `tfl.json` file downloaded when creating the credential key for the service account
 
-#### Data Ingestion
+### Data Ingestion
 
 The ingestion process is automated using Kestra and follows these steps:
 
@@ -173,7 +173,7 @@ The dashboard includes two tiles and allows users to filter by:
 
 ## Notes
 
-- Data source: https://crowding.data.tfl.gov.uk/
+- Data source: https://crowding.data.tfl.gov.uk/.
 
 - Official dashboards are available at the [TfL Network Demand Data Website](https://tfl.gov.uk/corporate/publications-and-reports/network-demand-data).
 
