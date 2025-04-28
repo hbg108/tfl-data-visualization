@@ -103,9 +103,9 @@ Manually add a new key-value under the `tfl` namespace, with:
 
 - Type: JSON
 
-- Value: the contents of the `tfl.json` file downloaded when creating the service account.
+- Value: the contents of the `tfl.json` file downloaded when creating the credential key for the service account.
 
-### Data Ingestion
+#### Data Ingestion
 
 The ingestion process is automated using Kestra and follows these steps:
 
@@ -143,7 +143,7 @@ The `05_dbt` flow:
 
 - Is automatically triggered upon successful completion of `04_station_footfall_scheduled`.
 
-## Dashboard (Looker Studio)
+### Dashboard (Looker Studio)
 
 You can access the dashboard [here](https://lookerstudio.google.com/reporting/33cf406c-c312-4a59-bebd-5d8bf62e0ca6).
 
@@ -159,7 +159,7 @@ The dashboard includes two tiles and allows users to filter by:
 
 - Granularity (Day / Week / Month / Year)
 
-### Tiles
+#### Tiles
 
 - **Time Series Chart**
 
@@ -175,6 +175,6 @@ The dashboard includes two tiles and allows users to filter by:
 
 - Data source: https://crowding.data.tfl.gov.uk/
 
-- Official dashboards are available at the [TfL Network Demand Data site](https://tfl.gov.uk/corporate/publications-and-reports/network-demand-data).
+- Official dashboards are available at the [TfL Network Demand Data Website](https://tfl.gov.uk/corporate/publications-and-reports/network-demand-data).
 
 - This project independently builds a full data pipeline and custom dashboard for learning and exploration purposes.
